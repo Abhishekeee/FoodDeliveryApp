@@ -1,0 +1,100 @@
+import {
+  View,
+  Text,
+  StatusBar,
+  Image,
+  KeyboardAvoidingView,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import React, { useState } from "react";
+import { signup } from "../config";
+import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
+import { setUser } from "../features/userSlice";
+
+export default function RegisterScreen() {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [cpass, setCpass] = useState("");
+  const [err, setErr] = useState();
+  const navigation = useNavigation();
+
+  const dispatch = useDispatch();
+  // SIGNUP
+  async function handleSignup() {
+    try {
+      dispatch(setUser(email));
+      if (pass == cpass) {
+        await signup(email, pass);
+        navigation.navigate("Home");
+      } else
+        setErr(
+          <Text className="text-red-500 text-xs my-2 text-center">
+            Password and Confirm Password Should Be Same
+          </Text>
+        );
+    } catch (error) {
+      setErr(
+        <Text className="text-red-500 text-xs my-2 text-center capitalize">
+          {error.message
+            .replace("Firebase:", "")
+            .replace(" ", "")
+            .replace("(auth/", "")
+            .replace("Error", "")
+            .replace("-", " ")
+            .replace(")", "")}
+        </Text>
+      );
+    }
+  }
+
+  return (
+    <>
+      <StatusBar hidden />
+
+      <View className="flex-1 justify-center items-center bg-slate-900">
+        <Image
+          source={{
+            uri: "https://img.freepik.com/free-vector/follow-me-social-business-theme-design_24877-50426.jpg?w=996&t=st=1660580318~exp=1660580918~hmac=58decb4fcb48af2dab4c1d4f58d9db7101d4a163c621b9fdb0751fb496c1d909",
+          }}
+          className="w-36 h-36"
+        />
+        <Text className="mt-3 font-bold text-[#55efc4] mb-4">Get Started!</Text>
+        <KeyboardAvoidingView>
+          <TextInput
+            placeholder="Email"
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-xs focus:border-[#C4E538] focus:border-2 font-bold"
+            selectionColor={"#3498db"}
+            onChangeText={(e) => setEmail(e.trim())}
+            value={email}
+          />
+          <TextInput
+            placeholder="Create password"
+            secureTextEntry={true}
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-xs focus:border-[#55efc4] focus:border-2 font-bold"
+            selectionColor={"#27ae60"}
+            onChangeText={(e) => setPass(e.trim())}
+            value={pass}
+          />
+          <TextInput
+            placeholder="Confirm password"
+            secureTextEntry={true}
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-xs focus:border-[#55efc4] focus:border-2 font-bold"
+            selectionColor={"#2ecc71"}
+            onChangeText={(e) => setCpass(e.trim())}
+            value={cpass}
+          />
+          {err}
+        </KeyboardAvoidingView>
+        <TouchableOpacity
+          className="py-3 bg-[#55efc4] border-2 mt-5 w-80"
+          onPress={handleSignup}
+        >
+          <Text className="font-bold text-slate-900 text-center">Sign Up</Text>
+        </TouchableOpacity>
+        <StatusBar hidden />
+      </View>
+    </>
+  );
+}
