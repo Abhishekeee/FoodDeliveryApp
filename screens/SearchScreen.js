@@ -95,7 +95,7 @@ export default function SearchScreen() {
         </View>
 
         {/* Search */}
-        <View className="flex-row items-center space-x-2 pb-4 mx-4 mb-4">
+        <View className="flex-row items-center space-x-2 pb-4 mx-2 mb-4">
           <View className="flex-row flex-1 space-x-4 items-center bg-gray-200 p-3">
             <TextInput
               placeholder="Search for Foods"

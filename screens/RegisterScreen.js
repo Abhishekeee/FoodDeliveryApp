@@ -53,18 +53,20 @@ export default function RegisterScreen() {
     <>
       <StatusBar hidden />
 
-      <View className="flex-1 justify-center items-center bg-slate-900">
+      <View className="flex-1 justify-center items-center">
         <Image
           source={{
             uri: "https://img.freepik.com/free-vector/follow-me-social-business-theme-design_24877-50426.jpg?w=996&t=st=1660580318~exp=1660580918~hmac=58decb4fcb48af2dab4c1d4f58d9db7101d4a163c621b9fdb0751fb496c1d909",
           }}
           className="w-36 h-36"
         />
-        <Text className="mt-3 font-bold text-[#55efc4] mb-4">Get Started!</Text>
+        <Text className="mt-3 font-bold text-slate-900 mb-4 text-lg">
+          Get Started!
+        </Text>
         <KeyboardAvoidingView>
           <TextInput
             placeholder="Email"
-            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-xs focus:border-[#C4E538] focus:border-2 font-bold"
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-base focus:border-[#C4E538] focus:border-2 font-bold focus:bg-slate-200"
             selectionColor={"#3498db"}
             onChangeText={(e) => setEmail(e.trim())}
             value={email}
@@ -72,7 +74,7 @@ export default function RegisterScreen() {
           <TextInput
             placeholder="Create password"
             secureTextEntry={true}
-            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-xs focus:border-[#55efc4] focus:border-2 font-bold"
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-base focus:border-[#55efc4] focus:border-2 font-bold focus:bg-slate-200"
             selectionColor={"#27ae60"}
             onChangeText={(e) => setPass(e.trim())}
             value={pass}
@@ -80,7 +82,7 @@ export default function RegisterScreen() {
           <TextInput
             placeholder="Confirm password"
             secureTextEntry={true}
-            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-xs focus:border-[#55efc4] focus:border-2 font-bold"
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-base focus:border-[#55efc4] focus:border-2 font-bold focus:bg-slate-200"
             selectionColor={"#2ecc71"}
             onChangeText={(e) => setCpass(e.trim())}
             value={cpass}
@@ -88,7 +90,7 @@ export default function RegisterScreen() {
           {err}
         </KeyboardAvoidingView>
         <TouchableOpacity
-          className="py-3 bg-[#55efc4] border-2 mt-5 w-80"
+          className="py-3 bg-[#55efc4] mt-5 w-80"
           onPress={handleSignup}
         >
           <Text className="font-bold text-slate-900 text-center">Sign Up</Text>
