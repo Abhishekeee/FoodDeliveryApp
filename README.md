@@ -6,8 +6,7 @@ Technologies Used:
 2) Redux Toolkit
 3) Firebase
 4) Sanity.io
-5) Expo CLI
-
+5) Expo CLI 
 Check out this app just by Downloading Expo client App !
 ![expo-go](https://user-images.githubusercontent.com/87627839/185908964-bd3e49bf-e9b6-4a8b-a9f3-5e8cacc22c2b.svg)
 ![WhatsApp Image 2022-08-22 at 4 38 36 PM](https://user-images.githubusercontent.com/87627839/185910422-2d5637fe-4c15-480f-a090-77479b14aa36.jpeg)
