@@ -74,8 +74,8 @@ export default function DishRow({ id, name, description, price, image }) {
               />
             </TouchableOpacity>
             <Text>{items.length}</Text>
-            <TouchableOpacity onPress={addItemToCart}>
-              <PlusCircleIcon size={40} color="#00CCBB" />
+            <TouchableOpacity onPress={addItemToCart} disabled={items.length>19}>
+              <PlusCircleIcon size={40} color={items.length<20 ? "#00CCBB" : "gray"} />
             </TouchableOpacity>
           </View>
         </View>

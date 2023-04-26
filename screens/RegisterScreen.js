@@ -6,47 +6,105 @@ import {
   KeyboardAvoidingView,
   TextInput,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import React, { useState } from "react";
 import { signup } from "../config";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-import { setUser } from "../features/userSlice";
+import { setUser, setUsername } from "../features/userSlice";
+import * as EmailValidator from "email-validator";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../config";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
+  const [userNAME, setUserNAME] = useState("");
   const [pass, setPass] = useState("");
   const [cpass, setCpass] = useState("");
   const [err, setErr] = useState();
   const navigation = useNavigation();
-
   const dispatch = useDispatch();
+
+  // Check Username already Exist or not
+  const checkUsername = async (USERNAME) => {
+    try {
+      const docData = await getDoc(doc(db, "users", USERNAME));
+      if (docData.exists()) {
+        return false;
+      } else {
+        return true;
+      }
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  };
   // SIGNUP
   async function handleSignup() {
     try {
-      dispatch(setUser(email));
-      if (pass == cpass) {
-        await signup(email, pass);
-        navigation.navigate("Home");
-      } else
+      if (!EmailValidator.validate(email)) {
         setErr(
           <Text className="text-red-500 text-xs my-2 text-center">
-            Password and Confirm Password Should Be Same
+            Invalid Email
           </Text>
         );
+      } else if (await checkUsername(userNAME)) {
+        dispatch(setUser(email));
+        dispatch(setUsername(userNAME));
+        if (pass == cpass) {
+          try {
+            await signup(email, pass);
+            // Inserting User Credentials in Firestore
+            setDoc(doc(db, "users", userNAME), {
+              username: userNAME,
+              Email: email,
+              password: pass,
+            })
+              .then((res) => {
+                console.log("data submitted");
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+            navigation.navigate("Profile");
+          } catch (err) {
+            setErr(
+              <Text className="text-red-500 text-xs my-2 text-center capitalize">
+                {formatErrorMessage(err.message)}
+              </Text>
+            );
+          }
+        } else {
+          setErr(
+            <Text className="text-red-500 text-xs my-2 text-center">
+              Password and Confirm Password Should Be Same
+            </Text>
+          );
+        }
+      } else {
+        setErr(
+          <Text className="text-red-500 text-xs my-2 text-center">
+            UserName or Email Already Exists
+          </Text>
+        );
+      }
     } catch (error) {
       setErr(
         <Text className="text-red-500 text-xs my-2 text-center capitalize">
-          {error.message
-            .replace("Firebase:", "")
-            .replace(" ", "")
-            .replace("(auth/", "")
-            .replace("Error", "")
-            .replace("-", " ")
-            .replace(")", "")}
+          {formatErrorMessage(error.message)`or Username`}
         </Text>
       );
     }
+  }
+  function formatErrorMessage(message) {
+    return message
+      .replace("Firebase:", "")
+      .replace(" ", "")
+      .replace("(auth/", "")
+      .replace("Error", "")
+      .replace("-", " ")
+      .replace(")", "");
   }
 
   return (
@@ -65,11 +123,18 @@ export default function RegisterScreen() {
         </Text>
         <KeyboardAvoidingView>
           <TextInput
+            placeholder="Username"
+            className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-base focus:border-p[#FFC312] focus:border-2 font-bold focus:bg-slate-200"
+            selectionColor={"#3498db"}
+            onChangeText={(e) => setUserNAME(e.trim())}
+            value={userNAME.toLowerCase()}
+          />
+          <TextInput
             placeholder="Email"
             className="border bg-gray-200 w-80 h-12 p-2 my-3 rounded-md text-base focus:border-[#C4E538] focus:border-2 font-bold focus:bg-slate-200"
             selectionColor={"#3498db"}
             onChangeText={(e) => setEmail(e.trim())}
-            value={email}
+            value={email.toLowerCase()}
           />
           <TextInput
             placeholder="Create password"

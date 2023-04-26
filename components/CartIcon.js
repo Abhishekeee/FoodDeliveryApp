@@ -6,10 +6,9 @@ import { useNavigation } from "@react-navigation/native";
 import CurrencyFormat from "react-currency-format";
 
 export default function CartIcon() {
-  const items = useSelector(selectCartItems);
+  let items = useSelector(selectCartItems);
   const navigation = useNavigation();
   const cartTotal = useSelector(selectCartTotal);
-
   if (items.length === 0) return null;
 
   return (

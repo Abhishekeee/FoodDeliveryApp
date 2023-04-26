@@ -9,35 +9,78 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { login } from "../config";
+import { db, login } from "../config";
 import { useDispatch } from "react-redux";
-import { setUser } from "../features/userSlice";
+import { setUser, setUsername } from "../features/userSlice";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
+  const [userNAME, setUserNAME] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState();
   const navigation = useNavigation();
   const dispatch = useDispatch();
+
+  const userExists = async (USERNAME) => {
+    try {
+      const docData = await getDoc(doc(db, "users", USERNAME));
+      if (docData.exists()) {
+        if (USERNAME === docData.data().username) {
+          return true;
+        }
+        return false;
+      }
+      return false;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  };
+  const getEmail = async (USERNAME) => {
+    try {
+      const docData = await getDoc(doc(db, "users", USERNAME));
+      if (docData.exists()) {
+        return docData.data().Email;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  };
   // Login
   async function handleLogin() {
     try {
-      dispatch(setUser(email));
-      await login(email, pass);
-      navigation.navigate("Home");
+      const EMAIL = await getEmail(userNAME);
+      if (EMAIL && (await userExists(userNAME))) {
+        await login(EMAIL, pass);
+        dispatch(setUsername(userNAME));
+        dispatch(setUser(EMAIL));
+        navigation.navigate("Profile");
+      } else {
+        setErr(
+          <Text className="text-red-500 text-xs my-2 text-center capitalize">
+            Account Not Found
+          </Text>
+        );
+      }
     } catch (error) {
       setErr(
         <Text className="text-red-500 text-xs my-2 text-center capitalize">
-          {error.message
-            .replace("Firebase:", "")
-            .replace(" ", "")
-            .replace("(auth/", "")
-            .replace("Error", "")
-            .replace("-", " ")
-            .replace(")", "")}
+          {formatErrorMessage(error.message)}
         </Text>
       );
     }
+  }
+  function formatErrorMessage(message) {
+    return message
+      .replace("Firebase:", "")
+      .replace(" ", "")
+      .replace("(auth/", "")
+      .replace("Error", "")
+      .replace("-", " ")
+      .replace(")", "");
   }
 
   return (
@@ -55,10 +98,10 @@ export default function LoginScreen() {
         </Text>
         <KeyboardAvoidingView>
           <TextInput
-            placeholder="Email"
+            placeholder="Username"
             className="border bg-gray-200 w-80 p-2 my-3 rounded-md text-base h-12 focus:border-[#00cec9] focus:border-2 font-bold focus:bg-slate-200"
-            onChangeText={(e) => setEmail(e.trim())}
-            value={email}
+            onChangeText={(e) => setUserNAME(e.trim().toLowerCase())}
+            value={userNAME}
           />
           <TextInput
             placeholder="Password"
@@ -69,12 +112,6 @@ export default function LoginScreen() {
           />
           {err}
         </KeyboardAvoidingView>
-        <Text
-          className="text-xs text-blue-600"
-          onPress={() => navigation.navigate("Register")}
-        >
-          Forgot your password?
-        </Text>
         <TouchableOpacity
           className="py-3 bg-[#00cec9] mt-5 w-80 rounded-lg"
           onPress={handleLogin}

@@ -6,17 +6,84 @@ import {
   StatusBar,
   SafeAreaView,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { XIcon } from "react-native-heroicons/solid";
+import { HomeIcon, XIcon } from "react-native-heroicons/solid";
 import * as Progress from "react-native-progress";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { selectRestaurant } from "../features/restaurantSlice";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import { selectUserLat, selectUserLon } from "../features/userSlice";
+import { emptyCart } from "../features/cartSlice";
 
 export default function DeliveryScreen() {
   const navigation = useNavigation();
   const restaurant = useSelector(selectRestaurant);
+  const userLatitude = useSelector(selectUserLat);
+  const userLongitude = useSelector(selectUserLon);
+  const [polylineCoords, setPolylineCoords] = useState([]);
+  const [time, setTime] = useState(0);
+
+  const dispatch = useDispatch();
+  const handleCancel = () => {
+    dispatch(emptyCart());
+    navigation.navigate("Home");
+  };
+  function deg2rad(deg) {
+    return deg * (Math.PI / 180);
+  }
+  // Calculate Distance between two location
+  useEffect(() => {
+    // Calculate Time and Distance for the Given Locations
+    function calculateBikeTravelTimeAndDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Radius of the earth in km
+      const dLat = deg2rad(lat2 - lat1); // deg2rad below
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) *
+          Math.cos(deg2rad(lat2)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c; // Distance in km
+
+      const averageSpeed = 15; // km/h
+      const travelTime = distance / averageSpeed; // hours
+      const minutes = Math.round(travelTime * 60);
+      const remainingMinutes = minutes % 60;
+
+      setTime(remainingMinutes);
+
+      const coords = [
+        { latitude: lat1, longitude: lon1 },
+        { latitude: lat2, longitude: lon2 },
+      ];
+      setPolylineCoords(coords);
+    }
+
+    calculateBikeTravelTimeAndDistance(
+      restaurant.lat,
+      restaurant.long,
+      userLatitude,
+      userLongitude
+    );
+  }, [restaurant.lat, restaurant.long, userLatitude, userLongitude]);
+  // Reduce Time in every minute
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTime((prevTime) => {
+        if (prevTime > 0) {
+          return prevTime - 1;
+        } else {
+          clearInterval(intervalId);
+          return prevTime;
+        }
+      });
+    }, 60 * 1000); // update every minute
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
     <>
@@ -33,22 +100,33 @@ export default function DeliveryScreen() {
             <View className="flex-row justify-between">
               <View>
                 <Text className="text-lg text-gray-400">Estimated Arival</Text>
-                <Text className="text-4xl font-bold">25-30 Minutes</Text>
+                <Text
+                  className={`text-4xl font-bold ${
+                    time === 0 ? "text-green-400" : "text-orange-500"
+                  }`}
+                >
+                  {time === 0 ? "Delivered" : `${time} minutes`}
+                </Text>
               </View>
               <Image
                 source={{ uri: "https//links.papareact.com/fls" }}
                 className="h-20 w-20"
               />
             </View>
-            <Progress.Bar size={30} color="#00ccbb" indeterminate={true} />
+            {time === 0 ? (
+              <HomeIcon size={30} className="text-yellow-300" />
+            ) : (
+              <Progress.Bar size={30} color="#00ccbb" indeterminate={true} />
+            )}
             <Text className="mt-3 text-gray-500">
-              Your order at{" "}
-              <Text className="font-bold">{restaurant.title} </Text>
+              Your order at
+              <Text className="font-bold"> {restaurant.title} </Text>
               is being prepared
             </Text>
           </View>
         </View>
         <MapView
+          provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude: restaurant.lat,
             longitude: restaurant.long,
@@ -68,6 +146,20 @@ export default function DeliveryScreen() {
             identifier="origin"
             pinColor="#c0392b"
           />
+          <Marker
+            coordinate={{
+              latitude: userLatitude,
+              longitude: userLongitude,
+            }}
+            title="Your Location"
+            identifier="destination"
+            pinColor="#00ccbb"
+          />
+          <Polyline
+            coordinates={polylineCoords}
+            strokeWidth={2}
+            strokeColor="#00ccbb"
+          />
         </MapView>
         <SafeAreaView className="bg-slate-900 flex-row items-center space-x-5 h-24">
           <Image
@@ -78,7 +170,12 @@ export default function DeliveryScreen() {
             <Text className="text-lg text-white">Delivery Boy</Text>
             <Text className="text-gray-400">Your Rider</Text>
           </View>
-          <Text className="text-[#00ccbb] text-lg mr-5 font-bold">Call</Text>
+          <Text
+            className="text-white bg-red-500 rounded p-3 text-lg mr-5 font-bold"
+            onPress={handleCancel}
+          >
+            Cancel Order
+          </Text>
         </SafeAreaView>
       </View>
     </>

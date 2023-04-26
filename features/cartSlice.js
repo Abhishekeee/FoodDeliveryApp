@@ -9,7 +9,8 @@ export const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      state.items = [...state.items, action.payload];
+      if (state.items.length < 20)
+        state.items = [...state.items, action.payload];
     },
     removeFromCart: (state, action) => {
       const index = state.items.findIndex(
@@ -26,11 +27,14 @@ export const cartSlice = createSlice({
       }
       state.items = newCart;
     },
+    emptyCart: (state) => {
+      state.items = [];
+    },
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { addToCart, removeFromCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, emptyCart } = cartSlice.actions;
 
 export const selectCartItems = (state) => state.cart.items;
 export const selectCartItemsWithId = (state, id) =>

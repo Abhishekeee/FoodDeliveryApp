@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -19,15 +20,23 @@ import Categories from "../components/Categories";
 import FeaturedRow from "../components/FeaturedRow";
 import sanityClient from "../sanity";
 import { useSelector, useDispatch } from "react-redux";
-import { selectuser, setData } from "../features/userSlice";
+import {
+  selectusername,
+  setData,
+  setUserLat,
+  setUserLon,
+} from "../features/userSlice";
 import { logout } from "../config";
+import CartIcon from "../components/CartIcon";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const user = useSelector(selectuser);
+  const username = useSelector(selectusername);
   const dispatch = useDispatch();
 
   const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
   const [featuredCategories, setFeaturedCategories] = useState([]);
 
   useEffect(() => {
@@ -50,6 +59,30 @@ export default function HomeScreen() {
       .catch((e) => console.log(`Can't Load Data ${e}`));
   }, []);
 
+  // Get User Location
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+    })();
+  }, []);
+
+  let text = "Waiting..";
+  if (errorMsg) {
+    text = errorMsg;
+  } else if (location) {
+    text = JSON.stringify(location);
+    dispatch(setUserLat(location.coords.latitude));
+    dispatch(setUserLon(location.coords.longitude));
+  }
+
+  // Searching
   const handleSearch = () => {
     dispatch(setData(keyword.trim()));
     navigation.navigate("Search");
@@ -66,6 +99,7 @@ export default function HomeScreen() {
 
   return (
     <>
+      <CartIcon />
       <StatusBar hidden />
       <View
         style={{
@@ -76,19 +110,19 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View className="flex-row pb-3 items-center mx-4 space-x-2">
-          <View>
+          <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
             <Image
               source={{ uri: "https://links.papareact.com/wru" }}
               className="h-7 w-7 bg-gray-300 p-4 rounded-full"
             />
-          </View>
+          </TouchableOpacity>
 
           <View className="flex-1">
             <Text className="font-bold text-gray-400 text-xs">
               Deliver Now!
             </Text>
             <Text className="font-bold text-base text-white">
-              {user}
+              {username}
               <ChevronDownIcon size={20} color="#00CCBB" />
             </Text>
           </View>
@@ -99,7 +133,7 @@ export default function HomeScreen() {
 
         {/* Search */}
         <View className="flex-row items-center space-x-2 pb-2 mx-2 mb-4">
-          <View className="flex-row flex-1 items-center bg-gray-200 p-3">
+          <View className="flex-row space-x-6 flex-1 items-center bg-gray-200 p-3">
             <TextInput
               placeholder="Search for Foods"
               keyboardType="default"
